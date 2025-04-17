@@ -542,7 +542,7 @@ public:
     //------------------------------------------------------
     void drawWatermark(cv::Mat& frame) const {
         cv::putText(frame, "Visit: https://www.erarnitox.de/pub/thanks/ to support me!", 
-                   cv::Point(50, 25), cv::FONT_HERSHEY_DUPLEX, 0.7, 
+                   cv::Point(50, 20), cv::FONT_HERSHEY_DUPLEX, 0.7, 
                    cv::Scalar(255, 255, 255), 1);
     }
 
