@@ -20,15 +20,15 @@ constexpr int g_sampleLengthMs  = 200;  // Time window to analyze for inhale det
 //------------------------------------------------------
 struct Parameters {
     std::string inputFile       = "input.mp4";
-    std::string outputFile      = "output2.mp4";
-    int silentSpeed             = 3;    // Gentler speed-up for silent segments
+    std::string outputFile      = "output3.mp4";
+    int silentSpeed             = 4;    // Gentler speed-up for silent segments
     int silentThreshold         = 30;   // Higher threshold to preserve soft speech
-    float minSilenceDuration    = 1;    // Shorter duration to capture brief pauses (seconds)
-    int visualDiffThreshold     = 1;    // Higher threshold to retain visual changes
-    int minInhaleDurationMs     = 80;   // Slightly shorter min inhale duration (ms)
-    int maxInhaleDurationMs     = 500;  // Slightly longer max inhale duration (ms)
-    int inhaleLowThreshold      = 50;   // Lowered for softer inhales
-    int inhaleHighThreshold     = 300;  // Raised to avoid cutting louder noises
+    float minSilenceDuration    = 0.7;    // Shorter duration to capture brief pauses (seconds)
+    int visualDiffThreshold     = 2;    // Higher threshold to retain visual changes
+    int minInhaleDurationMs     = 60;   // Slightly shorter min inhale duration (ms)
+    int maxInhaleDurationMs     = 600;  // Slightly longer max inhale duration (ms)
+    int inhaleLowThreshold      = 40;   // Lowered for softer inhales
+    int inhaleHighThreshold     = 350;  // Raised to avoid cutting louder noises
 };
 
 //------------------------------------------------------
@@ -101,6 +101,30 @@ bool isInInhale(const double time, const std::vector<std::pair<double, double>>&
         [time](const auto& interval) { 
             return time >= interval.first && time <= interval.second; 
         });
+}
+
+//------------------------------------------------------
+//
+//------------------------------------------------------
+[[nodiscard]] static inline
+bool isSentenceEnding(const std::vector<short>& audioWindow) {
+    const int windowSize = audioWindow.size() / 10;
+    std::vector<double> energy;
+    for (size_t i = 0; i < audioWindow.size() - windowSize; i += windowSize) {
+        double sum = 0;
+        for (size_t j = i; j < i + windowSize; j++) {
+            sum += audioWindow[j] * audioWindow[j];
+        }
+        energy.push_back(sqrt(sum / windowSize));
+    }
+    
+    if (energy.size() >= 3) {
+        if (energy[energy.size()-1] < energy[energy.size()-2] && 
+            energy[energy.size()-2] < energy[energy.size()-3]) {
+            return true;
+        }
+    }
+    return false;
 }
 
 //------------------------------------------------------
@@ -297,7 +321,7 @@ public:
             const std::vector<short> audioSample(processedAudioData_.begin() + currentAudioPos,
                                                 processedAudioData_.begin() + audioSampleEnd);
 
-            if (getMaxVolume(audioSample) < params_.silentThreshold) {
+            if (not isSentenceEnding(audioSample) && getMaxVolume(audioSample) < params_.silentThreshold) {
                 if (silentFrames.empty()) {
                     silentStartPos = currentAudioPos;
                     silentBaseline = frame.clone();
