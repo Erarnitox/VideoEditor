@@ -1,6 +1,9 @@
 <a id="top"></a>
 <br />
 <div align="center">
+  <a href="https://erarnitox.de">
+    <img src="res/watermark.png" alt="Logo" width="auto" height="80">
+  </a>
   <h3 align="center">Erarnitox's Video Editor</h3>
 </div>
 
