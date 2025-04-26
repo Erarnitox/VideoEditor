@@ -25,6 +25,7 @@ constexpr int g_sampleLengthMs = 200;  // Time window to analyze for inhale dete
 struct Parameters {
     std::string inputFile = "input.mp4";
     std::string outputFile = "output.mp4";
+    std::string watermarkString = "Visit: https://www.erarnitox.de/pub/thanks/ to support me!";
     int silentSpeed = 4;               // More aggressive speed-up for silent segments
     int silentThreshold = 20;          // Lower threshold to catch more subtle silence
     float minSilenceDuration = 0.2;    // Shorter minimum to catch briefer pauses (seconds)
@@ -541,7 +542,7 @@ public:
     // Draw debug information on frame
     //------------------------------------------------------
     void drawWatermark(cv::Mat& frame) const {
-        cv::putText(frame, "Visit: https://www.erarnitox.de/pub/thanks/ to support me!", 
+        cv::putText(frame, params_.watermarkString, 
                    cv::Point(50, 20), cv::FONT_HERSHEY_DUPLEX, 0.7, 
                    cv::Scalar(255, 255, 255), 1);
     }
@@ -706,6 +707,7 @@ Parameters parseCommandLine(int argc, char* argv[]) {
         else if (paramName == "--max-inhale") params.maxInhaleDurationMs = std::stoi(paramValue);
         else if (paramName == "--inhale-low") params.inhaleLowThreshold = std::stoi(paramValue);
         else if (paramName == "--inhale-high") params.inhaleHighThreshold = std::stoi(paramValue);
+        else if (paramName == "--watermark") params.watermarkString = paramValue;
         else if (paramName == "--debug") params.debugMode = (paramValue == "true" || paramValue == "1");
     }
     
