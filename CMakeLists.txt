@@ -6,8 +6,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenCV REQUIRED)
 find_package(SndFile REQUIRED)
+find_package(TBB REQUIRED)
 
-add_executable(video_editor main.cpp)
+add_executable(video_editor main_streaming.cpp)
 
 target_include_directories(video_editor PRIVATE ${OpenCV_INCLUDE_DIRS} ${SndFile_INCLUDE_DIRS})
-target_link_libraries(video_editor PRIVATE ${OpenCV_LIBS} ${SndFile_LIBRARIES})
+target_link_libraries(video_editor PRIVATE TBB::tbb ${OpenCV_LIBS} ${SndFile_LIBRARIES})
