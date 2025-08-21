@@ -833,15 +833,29 @@ private:
         // Define multiple watermark strings that will rotate
         const std::vector<std::string> watermarkStrings = {
             "Visit: https://www.erarnitox.de/pub/thanks/ to support me!",
-            "Don't forget to Like and Subscribe and Stuff",
+            "Don't forget to Like and Subscribe and Stuff...",
             "Hack the Planet!",
-            "And Learn Game Hacking at GuidedHacking.com!"
+            "Learn Game Hacking at GuidedHacking.com!",
+            "Erarnitox.de"
         };
+
+        static int lastIndex = 0;
+        static int x = 0;
+        static int y = 30;
+        static double lastTime = time;
         
         // Calculate which string to use based on time (changes every 8 seconds)
-        const int activeStringIndex = static_cast<int>(time / 8.0) % watermarkStrings.size();
+        const int activeStringIndex = static_cast<int>(time / 60.0) % watermarkStrings.size();
         const std::string currentWatermark = watermarkStrings[activeStringIndex];
         
+        if(lastIndex != activeStringIndex)
+        {
+            x = 0;
+            y = 30;
+            lastIndex = activeStringIndex;
+            lastTime = time;
+        }
+
         // Configure font properties
         const int fontFace = cv::FONT_HERSHEY_DUPLEX;
         const double fontScale = 0.65;
@@ -857,9 +871,9 @@ private:
         const int totalWidth = textSize.width + 2 * padding;
         
         // Calculate position with animation
-        int x, y;
         
         // Animation logic - different effects based on time
+
         if (params_.debugMode) {
             // In debug mode, keep it in a fixed position to avoid interfering with debug info
             x = 50;
@@ -867,15 +881,14 @@ private:
         } else {
             // Main animation logic - scrolling from right to left
             const double animationSpeed = 0.5; // Pixels per second
-            const double scrollPeriod = frame.cols + totalWidth; // Total distance for full scroll
-            const double positionOffset = fmod(time * animationSpeed, scrollPeriod);
+            const double scrollPeriod = frame.cols + totalWidth * 10; // Total distance for full scroll
+            const double positionOffset = fmod((time - lastTime) * animationSpeed, scrollPeriod);
             
             // Start off-screen to the right, scroll left
-            x = frame.cols - static_cast<int>(positionOffset);
-            y = frame.rows - 15;
+            x += static_cast<int>(positionOffset);
             
             // Add subtle vertical bounce effect
-            y += static_cast<int>(5.0 * sin(time * 1.5));
+            // y += static_cast<int>(sin(time));
         }
         
         // Ensure position stays within frame boundaries
@@ -883,16 +896,16 @@ private:
         y = std::max(totalHeight + 5, std::min(y, frame.rows - 5));
         
         // Create semi-transparent overlay for better visibility
-        cv::Rect backgroundRect(0, 0, 1920, 100);
+        cv::Rect backgroundRect(0, 0, 1920, 50);
         
         // Draw semi-transparent black background
         cv::Mat roi = frame(backgroundRect);
         cv::Mat overlay = roi.clone();
-        cv::rectangle(overlay, cv::Point(0, 0), cv::Point(totalWidth, totalHeight), 
+        cv::rectangle(overlay, cv::Point(0, 0), cv::Point(1920, 50), 
                     cv::Scalar(0, 0, 0), cv::FILLED);
         
         // Blend overlay with original (70% overlay, 30% original)
-        double alpha = 0.7;
+        double alpha = 1;
         cv::addWeighted(overlay, alpha, roi, 1 - alpha, 0, roi);
         
         // Draw the text with subtle glow effect
@@ -905,13 +918,6 @@ private:
         // Draw main text
         cv::putText(frame, currentWatermark, textPos, 
                 fontFace, fontScale, cv::Scalar(255, 255, 255), thickness);
-        
-        // Add subtle underline that matches the scrolling animation
-        const double underlineOffset = fmod(time * 2.0, totalWidth);
-        cv::line(frame, 
-                cv::Point(x + padding, y - padding + 2), 
-                cv::Point(x + padding + static_cast<int>(underlineOffset), y - padding + 2),
-                cv::Scalar(0, 200, 255), 1);
     }
     
     void writeChunkAudio(int chunkId, const std::vector<short>& chunkAudio) {
@@ -1126,7 +1132,7 @@ int main(int argc, char* argv[]) {
             }
             
             // Process in chunks for normalization
-            const size_t chunkSize = 44100 * sfinfo.channels * 30;  // 30 second chunks
+            const size_t chunkSize = 44100 * sfinfo.channels * 60;  // 1min chunks
             std::vector<short> chunk(chunkSize);
             
             while (true) {
